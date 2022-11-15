@@ -1,0 +1,28 @@
+C51 COMPILER V9.54   NOTE                                                                  11/15/2022 17:23:52 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE NOTE
+OBJECT MODULE PLACED IN .\Objects\note.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE note.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\n
+                    -ote.lst) TABS(2) OBJECT(.\Objects\note.obj)
+
+line level    source
+
+   1          //                  寄存器概念
+   2          //一种存储器，八个一个分组，每个都连着一个线来控制电路
+   3          //比如P2就是一个寄存器
+   4          //MCU中的CPU通过代码直接控制寄存器，来置高低电平
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

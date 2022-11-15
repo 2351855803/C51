@@ -1,0 +1,118 @@
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 22:17:23 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          
+   3          
+   4          
+   5          //定义按键寄存器
+   6          sbit k1 = P3^1;
+   7          //定义LED
+   8          sbit led0 = P2^0;
+   9          
+  10          //延时函数
+  11          void Delayms(unsigned int num)    //@12.000MHz
+  12          {
+  13   1        unsigned char i, j;
+  14   1        
+  15   1          while(num--)
+  16   1          {
+  17   2            
+  18   2              i = 2;
+  19   2              j = 239;
+  20   2              do
+  21   2              {
+  22   3                while (--j);
+  23   3              } while (--i);
+  24   2            
+  25   2      
+  26   2          }
+  27   1      
+  28   1        
+  29   1      }
+  30          
+  31          
+  32          int main()
+  33          {
+  34   1        //-------------------------------------通过按钮来控制LED灯,长按亮，松手灭
+  35   1      //  P2 = 0Xff;
+  36   1      //  while(1)
+  37   1      //  {
+  38   1      //    
+  39   1      //    //k1为P3^1
+  40   1      //    if(0 == k1)
+  41   1      //    {
+  42   1      //      P2 = 0xfe;
+  43   1      //    }
+  44   1      //    else
+  45   1      //    {
+  46   1      //      P2 = 0xff;
+  47   1      //    }
+  48   1      //    
+  49   1      //  }
+  50   1        
+  51   1      
+  52   1        //-------------------------------------按一下亮，按一下灭
+  53   1      //  while(1)
+  54   1      //  {
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 22:17:23 PAGE 2   
+
+  55   1      //      if(0 == k1)
+  56   1      //      {
+  57   1      //          //消除抖动，有两端，第二个delay表示消除抬起来的抖动
+  58   1      //          Delayms(20);
+  59   1      //          //表示一直按着按钮
+  60   1      //          while(0 == k1);
+  61   1      //          //抬起消抖
+  62   1      //          Delayms(20);
+  63   1      //          //取反
+  64   1      //          led0 = ~led0;
+  65   1      
+  66   1      //      }
+  67   1      
+  68   1      //    
+  69   1      //  }
+  70   1        //-------------------------------------独立按键控制LED显示二进制
+  71   1        //k1按下一下，加一
+  72   1        
+  73   1        int a = 0x00;
+  74   1        
+  75   1        while(1)
+  76   1        {
+  77   2            if(0 == k1)
+  78   2            {
+  79   3                Delayms(20);
+  80   3                while(0 == k1);
+  81   3                Delayms(20);
+  82   3                //消抖已经完成
+  83   3                a = a + 1;
+  84   3                P2 = ~a;
+  85   3            }
+  86   2        }
+  87   1        
+  88   1        
+  89   1        return 0;
+  90   1        
+  91   1      }
+*** WARNING C294 IN LINE 89 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     55    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

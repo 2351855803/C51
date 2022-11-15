@@ -1,0 +1,85 @@
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:07:03 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include<reg52.h>
+   2          #include<intrins.h>
+   3          
+   4          //--------------------------------------------------//延时500ms
+   5          void Delay500ms(){
+   6   1        unsigned char i, j, k;
+   7   1      
+   8   1        _nop_();
+   9   1        i = 4;
+  10   1        j = 205;
+  11   1        k = 187;
+  12   1        do
+  13   1        {
+  14   2          do
+  15   2          {
+  16   3            while (--k);
+  17   3          } while (--j);
+  18   2        } while (--i);
+  19   1      }
+  20          
+  21          int main()
+  22          {
+  23   1        //--------------------------------------------------//LED点亮
+  24   1                              
+  25   1        //由于LED均是共阴极连接，则低电平可点亮
+  26   1        //通过P2来分别控制
+  27   1        //控制第一个亮 0X 1111 1110 
+  28   1          //P2 = 0xfe;
+  29   1        
+  30   1        //--------------------------------------------------//LED闪烁 
+  31   1      //  while(1)
+  32   1      //  {
+  33   1      //    P2 = 0xfe;
+  34   1      //    Delay500ms();
+  35   1      //    P2 = 0x7f;
+  36   1      //    Delay500ms();
+  37   1      //  }
+  38   1        
+  39   1        //--------------------------------------------------//流水灯
+  40   1        P2 = 0xfe;
+  41   1        while(1)
+  42   1        {
+  43   2      //    11111110
+  44   2      //    11111100 | 00000001
+  45   2          
+  46   2          //复位
+  47   2          if(0x7f == P2)
+  48   2          {
+  49   3            P2 = 0xfe;
+  50   3          }
+  51   2          
+  52   2          P2 = (P2 << 1) | 0x01;
+  53   2          Delay500ms();
+  54   2        }
+C51 COMPILER V9.54   MAIN                                                                  11/15/2022 21:07:03 PAGE 2   
+
+  55   1        
+  56   1        
+  57   1        return 0;
+  58   1      }
+*** WARNING C294 IN LINE 57 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     38    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
