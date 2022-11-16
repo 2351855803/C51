@@ -1,0 +1,106 @@
+C51 COMPILER V9.54   MAIN1                                                                 11/16/2022 15:51:47 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN1
+OBJECT MODULE PLACED IN .\Objects\main1.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main1.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\
+                    -main1.lst) TABS(6) OBJECT(.\Objects\main1.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <intrins.h>
+   3          
+   4          
+   5          //定义断码数组
+   6          char arr[] = {0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f};
+   7          
+   8          //延时500ms
+   9          void Delay500ms()       //@12.000MHz
+  10          {
+  11   1            unsigned char i, j, k;
+  12   1      
+  13   1            _nop_();
+  14   1            i = 4;
+  15   1            j = 205;
+  16   1            k = 187;
+  17   1            do
+  18   1            {
+  19   2                  do
+  20   2                  {
+  21   3                        while (--k);
+  22   3                  } while (--j);
+  23   2            } while (--i);
+  24   1      }
+  25          
+  26          
+  27          
+  28          
+  29          void temp(int num , int num1)
+  30          {
+  31   1            //通过运算转换二进制给片选
+  32   1            P2_2 = num%2;
+  33   1            num /= 2;
+  34   1            P2_3 = num%2;
+  35   1            num /= 2;
+  36   1            P2_4 = num%2;
+  37   1      
+  38   1            P0 = arr[num1];   
+  39   1            
+  40   1      }
+  41          
+  42          
+  43          int main()
+  44          {
+  45   1            //------------------------------------------  循环显示
+  46   1            //临时测试函数,形参列表（第几个数码管亮，亮的数字）
+  47   1            //数码管范围 0-7
+  48   1            //可以隔着0.5s显示
+  49   1      //    while(1)
+  50   1      //    {
+  51   1      //          int i;
+  52   1      //          for(i = 0; i <= 7; i++)
+  53   1      //          {
+  54   1      //                Delay500ms();
+C51 COMPILER V9.54   MAIN1                                                                 11/16/2022 15:51:47 PAGE 2   
+
+  55   1      //                temp(i,7);
+  56   1      //                
+  57   1      //          }           
+  58   1      //    }
+  59   1            
+  60   1            
+  61   1            //------------------------------------------  动态显示0-9
+  62   1            
+  63   1            while(1)
+  64   1            {
+  65   2                  int i;
+  66   2                  for(i = 0; i <= 7; i++)
+  67   2                  {
+  68   3                        Delay500ms();
+  69   3                        temp(i,i);
+  70   3                        
+  71   3                  }           
+  72   2            }
+  73   1            
+  74   1            return 0;
+  75   1      }
+  76          
+  77          
+  78          
+  79          
+*** WARNING C294 IN LINE 74 OF main1.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    136    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
