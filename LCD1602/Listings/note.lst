@@ -1,0 +1,55 @@
+C51 COMPILER V9.54   NOTE                                                                  11/17/2022 20:25:58 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE NOTE
+OBJECT MODULE PLACED IN .\Objects\note.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE note.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\n
+                    -ote.lst) TABS(6) OBJECT(.\Objects\note.obj)
+
+line level    source
+
+   1          //预编译：
+   2          //      以#开头的
+   3          //    作用：在真正的编译开始前，对代码做一些处理
+   4          //    
+   5          //#include <REGX52.H>  ------- 把REGX52.H文件内容搬到此处
+   6          //#define PI 3.14      ------- 宏定义，把PI换成3.14
+   7          //#define ABC          ------- 定义ABC
+   8          //#ifndef __xx_h__     ------- 如果没有定义xx.h文件
+   9          //#endif               ------- 与#ifndef，#if配对使用，组成括号
+  10          
+  11          //------------------------------------------------------------------------
+  12          
+  13          //通过定义一个比特位来告诉LCD显示位置，总共32个位置，需要2^5
+  14          //一个比特位显示 0/1，，一个比特位显示两个位置，两个显示四个，
+  15          //同理2的五次方有32种可能。刚好占满
+  16          //---------------确定位置的char字节  1000 0000 最高位确定为1，剩下七个来确定位置
+  17          //        位置表格
+  18          //00    -----------   10
+  19          //40    -----------   50
+  20          
+  21          //如何区别RS是要内容还是位置？
+  22          //位置-命令/指令
+  23          //内容-数据
+  24          //RS-高电平数据 = 1
+  25          //  -低电平指令 = 0 
+  26          //  
+  27          //  
+  28          //lcd步骤：
+  29          //        初始化
+  30          //      发送位置
+  31          //      发送数据
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

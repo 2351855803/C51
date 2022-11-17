@@ -1,0 +1,54 @@
+C51 COMPILER V9.54   MAIN                                                                  11/17/2022 21:46:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(6) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "LCD1602.h"
+   3          #include "Delay.h"
+   4          
+   5          
+   6          int main()
+   7          {
+   8   1            int i = 0;
+   9   1            char arr[] = "abcdef";
+  10   1            
+  11   1            
+  12   1            //≥ı ºªØ
+  13   1            Lcd_initial();
+  14   1            
+  15   1            while(1)
+  16   1            {
+  17   2                  while(arr[i] != '\0')
+  18   2                  {
+  19   3                        Delayms(500);
+  20   3                        Write_cmd(0x80+i);
+  21   3                        Write_data(arr[i]);
+  22   3                        i++;
+  23   3                              
+  24   3                  }
+  25   2      
+  26   2            }
+  27   1            
+  28   1            return 0;
+  29   1      }
+*** WARNING C294 IN LINE 28 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     66    ----
+   CONSTANT SIZE    =      7    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
