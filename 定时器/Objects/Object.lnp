@@ -1,7 +1,0 @@
-".\Objects\main.obj",
-".\Objects\Delay.obj",
-".\Objects\LCD1602.obj",
-".\Objects\note.obj",
-".\Objects\Timer0.obj" 
-TO ".\Objects\Object" 
-PRINT(".\Listings\Object.m51") RAMSIZE(256) 
