@@ -1,0 +1,6 @@
+".\Objects\main.obj",
+".\Objects\note.obj",
+".\Objects\Delay.obj",
+".\Objects\UART.obj" 
+TO ".\Objects\Object" 
+PRINT(".\Listings\Object.m51") RAMSIZE(256) 
