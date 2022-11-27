@@ -1,0 +1,108 @@
+C51 COMPILER V9.54   MATRIXSCREEN                                                          11/27/2022 20:06:21 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MATRIXSCREEN
+OBJECT MODULE PLACED IN .\Objects\MatrixScreen.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE MatrixScreen.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Li
+                    -stings\MatrixScreen.lst) TABS(6) OBJECT(.\Objects\MatrixScreen.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Delay.h"
+   3          
+   4          #define Matrix_Line_Out P0
+   5          
+   6          //RCLK
+   7          sbit RCK = P3^5;
+   8          //SRCLK
+   9          sbit SRC = P3^6;
+  10          //SER
+  11          sbit SER = P3^4;
+  12          
+  13          
+  14          
+  15          //*************************************************
+  16          
+  17          //功能：74HC595输出，输入的数据最高位变到最低位
+  18          //返回类型：void
+  19          //形参：unsigned char 
+  20          
+  21          //*************************************************
+  22          void _74HC595_Write(unsigned char byte)
+  23          {
+  24   1            unsigned char i;
+  25   1            for(i = 0; i < 8; i++)
+  26   1            {
+  27   2                  //取SER为byte的高位
+  28   2                  SER = byte & 0x80;
+  29   2                  //拉高触发
+  30   2                  SRC = 1;
+  31   2                  //复位
+  32   2                  SRC = 0;
+  33   2                  //byte左移一位，取下一个位
+  34   2                  byte = byte << 1;
+  35   2            }
+  36   1            
+  37   1            //上升沿把数据传送过去
+  38   1            RCK = 1;
+  39   1            //复位
+  40   1            RCK = 0;
+  41   1            
+  42   1      }
+  43          
+  44          //*************************************************
+  45          
+  46          //功能：74HC595初始化
+  47          //返回类型：void
+  48          //形参：void
+  49          
+  50          //*************************************************
+  51          
+  52          void _74HC595_Initial()
+  53          {
+  54   1            RCK = 0;
+C51 COMPILER V9.54   MATRIXSCREEN                                                          11/27/2022 20:06:21 PAGE 2   
+
+  55   1            SRC = 0;
+  56   1      }
+  57          
+  58          //*************************************************
+  59          
+  60          //功能：LED点阵显示
+  61          //返回类型：void
+  62          //形参：列，发送到_74HC595_Write的数据
+  63          
+  64          //*************************************************
+  65          void MatrixScreen_Show(unsigned char row, byte)
+  66          {
+  67   1            Matrix_Line_Out = ~(0x80 >> row-1);
+  68   1            _74HC595_Write(byte);
+  69   1            
+  70   1      }
+  71          
+  72          
+  73          
+  74          
+  75          
+  76          
+  77          
+  78          
+  79          
+  80          
+  81          
+  82          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     50    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

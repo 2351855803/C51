@@ -1,0 +1,29 @@
+C51 COMPILER V9.54   NOTE                                                                  11/27/2022 16:12:09 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE NOTE
+OBJECT MODULE PLACED IN .\Objects\note.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE note.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\n
+                    -ote.lst) TABS(6) OBJECT(.\Objects\note.obj)
+
+line level    source
+
+   1          
+   2          //sfr(special function register)
+   3          //    特殊功能寄存器
+   4          //sbit(special bit)
+   5          //    特殊位
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
