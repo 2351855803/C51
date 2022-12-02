@@ -1,0 +1,133 @@
+C51 COMPILER V9.54   DS1302                                                                11/30/2022 20:06:34 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\Objects\DS1302.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE DS1302.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings
+                    -\DS1302.lst) TABS(6) OBJECT(.\Objects\DS1302.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          
+   3          
+   4          sbit DS1302_CE = P3^5;
+   5          sbit DS1302_SCLK = P3^6;
+   6          sbit DS1302_IO = P3^4;
+   7          
+   8          
+   9          //*************************************************
+  10          
+  11          //功能：DS1302初始化
+  12          //返回类型：void
+  13          //形参：void
+  14          
+  15          //*************************************************
+  16          void DS1302_Init()
+  17          {
+  18   1            DS1302_CE = 0;
+  19   1            DS1302_SCLK = 0;
+  20   1      }
+  21          
+  22          
+  23          
+  24          
+  25          //*************************************************
+  26          
+  27          //功能：DS1302写操作
+  28          //返回类型：void
+  29          //形参：unsigned char 命令 数据
+  30          
+  31          //*************************************************
+  32          void DS1302_WriteByte(unsigned char cmd, byte)
+  33          {
+  34   1            unsigned char i;
+  35   1            
+  36   1            //初始化后拉高
+  37   1            DS1302_CE = 1;
+  38   1            
+  39   1            //从最低位到最高位分别获得命令
+  40   1            for(i = 0; i < 8; i++)
+  41   1            {
+  42   2                  DS1302_IO = cmd & (0x01 << i );
+  43   2                  
+  44   2                  //上升沿把数据写入DS1302_IO，因为要求最小延时为纳秒，51机器周期为1微秒，无需延时
+  45   2                  DS1302_SCLK = 1;
+  46   2                  DS1302_SCLK = 0;
+  47   2            }
+  48   1            
+  49   1            //从最低位到最高位分别获得数据
+  50   1            for(i = 0; i < 8; i++)
+  51   1            {
+  52   2                  DS1302_IO = byte & (0x01 << i );
+  53   2                  DS1302_SCLK = 1;
+  54   2                  DS1302_SCLK = 0;
+C51 COMPILER V9.54   DS1302                                                                11/30/2022 20:06:34 PAGE 2   
+
+  55   2            }
+  56   1            
+  57   1            DS1302_CE = 0;
+  58   1            
+  59   1      }
+  60          
+  61          
+  62          
+  63          
+  64          //*********************************************** **
+  65          
+  66          //功能：DS1302读操作
+  67          //返回类型：unsigned char
+  68          //形参：unsigned char 命令
+  69          
+  70          //*************************************************
+  71          unsigned char  DS1302_ReadByte(unsigned char cmd)
+  72          {
+  73   1            unsigned char i;
+  74   1            unsigned char temp = 0x00;
+  75   1            
+  76   1            DS1302_CE = 1;
+  77   1            
+  78   1            //从最低位到最高位分别获得命令
+  79   1            for(i = 0; i < 8; i++)
+  80   1            {
+  81   2                  DS1302_IO = cmd & (0x01 << i );
+  82   2                  DS1302_SCLK = 0;
+  83   2                  DS1302_SCLK = 1;
+  84   2                  
+  85   2            }
+  86   1            
+  87   1            //读操作
+  88   1            for(i = 0; i < 8; i++)
+  89   1            {
+  90   2                  DS1302_SCLK = 1;
+  91   2                  DS1302_SCLK = 0;
+  92   2                  
+  93   2                  //如果此bit为1
+  94   2                  if(DS1302_IO)
+  95   2                  {
+  96   3                        temp |= 0x01 << i;
+  97   3                  }
+  98   2            }
+  99   1            
+ 100   1            DS1302_CE = 0;
+ 101   1            DS1302_IO = 0;
+ 102   1            
+ 103   1            //BCD（16进制）转十进制
+ 104   1            return (temp/16*10 + temp%16);
+ 105   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    179    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   DS1302                                                                11/30/2022 20:06:34 PAGE 3   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

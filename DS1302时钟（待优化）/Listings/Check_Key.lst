@@ -1,0 +1,129 @@
+C51 COMPILER V9.54   CHECK_KEY                                                             12/02/2022 21:23:31 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE CHECK_KEY
+OBJECT MODULE PLACED IN .\Objects\Check_Key.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE Check_Key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\Check_Key.lst) TABS(6) OBJECT(.\Objects\Check_Key.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          
+   3          
+   4          
+   5          
+   6          sbit intoTimeSet = P3^1;
+   7          //设置秒或者分或者小时
+   8          sbit sellect = P3^0;
+   9          sbit timeAdd = P3^2;
+  10          sbit timesub = P3^3;
+  11          
+  12          //用来进入Set的判断依据
+  13          bit timeSetkey = 0;
+  14          
+  15          
+  16          //检查按键是否按下进入时间设置模式
+  17          void checky_timeSet()
+  18          {
+  19   1            if(!intoTimeSet)
+  20   1            {
+  21   2                  Delayms(10);
+*** WARNING C206 IN LINE 21 OF Check_Key.c: 'Delayms': missing function-prototype
+*** ERROR C267 IN LINE 21 OF Check_Key.c: 'Delayms': requires ANSI-style prototype
+  22   2                  if(!intoTimeSet)
+  23   2                  {
+  24   3                        Delayms(1000);
+  25   3                        timeSetkey = ~timeSetkey;
+  26   3                  }
+  27   2            }
+  28   1      }
+  29          
+  30          void checky_sellect()
+  31          {
+  32   1            if(!sellect)
+  33   1            {
+  34   2                  Delayms(10);
+  35   2                  if(!sellect)
+  36   2                  {
+  37   3                        Delayms(10);
+  38   3                        timeOption += 1;
+*** ERROR C202 IN LINE 38 OF Check_Key.c: 'timeOption': undefined identifier
+  39   3                        if(4 == timeOption)
+*** ERROR C202 IN LINE 39 OF Check_Key.c: 'timeOption': undefined identifier
+  40   3                        {
+  41   4                              timeOption = 1;
+*** ERROR C202 IN LINE 41 OF Check_Key.c: 'timeOption': undefined identifier
+  42   4                        }
+  43   3                        
+  44   3                  }
+  45   2            }
+  46   1      }
+  47          
+  48          void checky_add()
+  49          {
+C51 COMPILER V9.54   CHECK_KEY                                                             12/02/2022 21:23:31 PAGE 2   
+
+  50   1            if(!timeAdd)
+  51   1            {
+  52   2                  Delayms(10);
+  53   2                  if(!timeAdd)
+  54   2                  {
+  55   3                        Delayms(10);
+  56   3                        if(1 == timeOption)
+*** ERROR C202 IN LINE 56 OF Check_Key.c: 'timeOption': undefined identifier
+  57   3                        {
+  58   4                              hours++;
+*** ERROR C202 IN LINE 58 OF Check_Key.c: 'hours': undefined identifier
+  59   4                        }
+  60   3                        else if(2 == timeOption)
+*** ERROR C202 IN LINE 60 OF Check_Key.c: 'timeOption': undefined identifier
+  61   3                        {
+  62   4                              minute++;
+*** ERROR C202 IN LINE 62 OF Check_Key.c: 'minute': undefined identifier
+  63   4                        }
+  64   3                        else if(3 == timeOption)
+*** ERROR C202 IN LINE 64 OF Check_Key.c: 'timeOption': undefined identifier
+  65   3                        {
+  66   4                              second++;
+*** ERROR C202 IN LINE 66 OF Check_Key.c: 'second': undefined identifier
+  67   4                        }
+  68   3                  
+  69   3                        
+  70   3                  }
+  71   2            }
+  72   1      }
+  73          
+  74          void checky_sub()
+  75          {
+  76   1            if(!timesub)
+  77   1            {
+  78   2                  Delayms(10);
+  79   2                  if(!timesub)
+  80   2                  {
+  81   3                        Delayms(10);
+  82   3                        if(1 == timeOption)
+*** ERROR C202 IN LINE 82 OF Check_Key.c: 'timeOption': undefined identifier
+  83   3                        {
+  84   4                              hours--;
+*** ERROR C202 IN LINE 84 OF Check_Key.c: 'hours': undefined identifier
+  85   4                        }
+  86   3                        else if(2 == timeOption)
+*** ERROR C202 IN LINE 86 OF Check_Key.c: 'timeOption': undefined identifier
+  87   3                        {
+  88   4                              minute--;
+*** ERROR C202 IN LINE 88 OF Check_Key.c: 'minute': undefined identifier
+  89   4                        }
+  90   3                        else if(3 == timeOption)
+*** ERROR C202 IN LINE 90 OF Check_Key.c: 'timeOption': undefined identifier
+  91   3                        {
+  92   4                              second--;
+*** ERROR C202 IN LINE 92 OF Check_Key.c: 'second': undefined identifier
+  93   4                        }
+  94   3                  
+  95   3                        
+  96   3                  }
+  97   2            }
+  98   1      }
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  16 ERROR(S)
