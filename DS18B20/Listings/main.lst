@@ -1,0 +1,62 @@
+C51 COMPILER V9.54   MAIN                                                                  12/18/2022 17:41:18 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(6) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "OneWire.h"
+   3          #include "LCD1602.h"
+   4          #include "DS18B20.h"
+   5          
+   6          int main()
+   7          {
+   8   1            unsigned char Max = 26;
+   9   1            unsigned char Min = 21;
+  10   1            Lcd_initial();
+  11   1      
+  12   1            while(1)
+  13   1            {
+  14   2                  DS18B20_ConvertT();
+  15   2                  Lcd_write_number(2,1,DS18B20_ReadT());
+  16   2                  Lcd_write_string(0xc3,".");
+  17   2                  Lcd_write_number(2,5,((unsigned long)(DS18B20_ReadT()*10000))%10000);
+  18   2                  
+  19   2                  
+  20   2                  if(DS18B20_ReadT() > Max)
+  21   2                  {
+  22   3                        Lcd_write_string(0x80,"High!");
+  23   3                  }
+  24   2                  else if (DS18B20_ReadT() < Min)
+  25   2                  {
+  26   3                        Lcd_write_string(0x80,"Low!");
+  27   3                  }
+  28   2                  else
+  29   2                  {
+  30   3                        Lcd_write_string(0x80,"     ");
+  31   3                  }
+  32   2                  
+  33   2            }
+  34   1            
+  35   1            
+  36   1            return 0;
+  37   1      }
+*** WARNING C294 IN LINE 36 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    178    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
