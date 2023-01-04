@@ -1,0 +1,1024 @@
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(6) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          
+   3          //_nop_()会用到下面头文件，代表跳过一个机器周期，12Mhz为1us，11.0592Mhz约为1.08us
+   4          #include <intrins.h>
+   5          
+   6          
+   7          unsigned char zhengZhuan[8]={0xf2,0xf6,0xf4,0xfc,0xf8,0xf9,0xf1,0xf3}; 
+   8          
+   9          unsigned char fanZhuan[8]={0xf1,0xf9,0xf8,0xfc,0xf4,0xf6,0xf2,0xf3}; 
+  10          
+  11          //设置A B C的吃药次数和用量
+  12          //数组分别存储 A吃药次数 A用量 B吃药次数 B用量  C吃药次数 C用量  以及用药间隔
+  13          char User[6] = 0;
+  14          //User数组的下标
+  15          //static表示静态，不会随着函数结束而使得该变量清零
+  16          static unsigned char num = 0;
+  17          
+  18          //定义存储密码的数组
+  19          //这个是密码
+  20          unsigned char _code[5] = {1,2,3,4,5};
+  21          unsigned char my_code[5] = {0,0,0,0,0};
+  22          //这是你输入的密码
+  23          
+  24          
+  25          //从0-5 分别为 A的小时分钟 B的小时分钟 C的小时分钟
+  26          char ABC_setTime[7] = 0;
+  27          //ABC_setTime数组的下标
+  28          unsigned char set_timeI = 0;
+  29          
+  30          //定义时钟变量
+  31          char hour = 0;
+  32          char minute = 0;
+  33          char second = 0;
+  34          //定义超过半小时提醒变量
+  35          char Awarn_TimeMinute = 25;
+  36          char Awarn_TimeHour = 25;
+  37          char Bwarn_TimeMinute = 25;
+  38          char Bwarn_TimeHour = 25;
+  39          char Cwarn_TimeMinute = 25;
+  40          char Cwarn_TimeHour = 25;
+  41          
+  42          //定时器0计数
+  43          static unsigned int timer0_count = 0;
+  44          
+  45          
+  46          //定义lcd1602寄存器
+  47          #define Lcdout P0
+  48          
+  49          //用来判断温度有没有大于35
+  50          unsigned char tempFlag = 0;
+  51          
+  52          //蜂鸣器
+  53          sbit BUZZER = P1^4;
+  54          //LCD1602定义引脚
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 2   
+
+  55          sbit RS = P2^6;
+  56          sbit RW = P2^5;
+  57          sbit EN = P2^7;
+  58          
+  59          //用药的灯
+  60          sbit A_LED = P2^0;
+  61          sbit B_LED = P2^1;
+  62          sbit C_LED = P2^2;
+  63          
+  64          //打开 关闭药柜
+  65          sbit Motor_open = P1^6;
+  66          sbit Motor_off = P1^7;
+  67          
+  68          //DS18B20
+  69          sbit DSPORT=P1^5;
+  70          
+  71          //定义电机状态变量
+  72          unsigned char motor_Flag = 0;
+  73          
+  74          void Motor();
+  75          
+  76          //********************************************************************************************************
+             -*************************************
+  77          
+  78           /**
+  79            *@brief           延时函数子函数
+  80            *@param   
+  81            *@return
+  82           */
+  83          void Delayms(unsigned char mm)      //需要延时多少ms就输入多少
+  84          {
+  85   1            
+  86   1            while(mm--)
+  87   1            {
+  88   2                  unsigned char i, j;
+  89   2      
+  90   2                  i = 2;
+  91   2                  j = 239;
+  92   2                  do
+  93   2                  {
+  94   3                        while (--j);
+  95   3                  } while (--i);          
+  96   2            }           
+  97   1      
+  98   1      }
+  99          
+ 100          void Delay1ms(unsigned int n)
+ 101          {
+ 102   1            unsigned int i,j;
+ 103   1            for(i=0;i<n;i++)
+ 104   1                  for(j=0;j<123;j++);
+ 105   1      }
+ 106          
+ 107          void delay5(unsigned char n)
+ 108          {
+ 109   1            do{_nop_();
+ 110   2                  _nop_();
+ 111   2                  _nop_();
+ 112   2                  n--;
+ 113   2              }
+ 114   1              while(n);
+ 115   1      }
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 3   
+
+ 116          //********************************************************************************************************
+             -*************************************
+ 117           /**
+ 118            *@brief           DS18B20
+ 119            *@param   
+ 120            *@return
+ 121           */
+ 122          unsigned char Ds18b20Init()
+ 123          {
+ 124   1            unsigned char i;
+ 125   1            DSPORT=0;
+ 126   1            delay5(120);
+ 127   1            DSPORT=1;
+ 128   1            i=0;
+ 129   1            while(DSPORT)
+ 130   1            {
+ 131   2                  Delay1ms(1);
+ 132   2                  i++;
+ 133   2                  if(i>5)
+ 134   2                  return 0;
+ 135   2            }
+ 136   1            return 1;
+ 137   1      }
+ 138          unsigned char Ds18b20WriteByte(unsigned char dat)
+ 139          {
+ 140   1            unsigned int i,j;
+ 141   1            for (j=0;j<8;j++)
+ 142   1            {
+ 143   2                  DSPORT=0;
+ 144   2                  i++;
+ 145   2                  DSPORT=dat&0x01;
+ 146   2                  delay5(12);
+ 147   2                  DSPORT=1;
+ 148   2                  dat>>=1;
+ 149   2            }
+ 150   1            return dat;
+ 151   1      }
+ 152          unsigned char Ds18b20ReadByte()
+ 153          {
+ 154   1            unsigned char byte,bi,i,j;
+ 155   1            for(j=8;j>0;j--)
+ 156   1            {
+ 157   2                  DSPORT=0;
+ 158   2                  i++;
+ 159   2                  DSPORT=1;
+ 160   2                  i++;
+ 161   2                  i++;
+ 162   2                  bi=DSPORT;
+ 163   2                  byte=(byte>>1)|(bi<<7);
+ 164   2                  delay5(9);
+ 165   2            }
+ 166   1            return byte;
+ 167   1      }
+ 168          void Ds18b20ReadTempCom()
+ 169          {
+ 170   1            Ds18b20Init();
+ 171   1            Delay1ms(1);
+ 172   1            Ds18b20WriteByte(0xcc);
+ 173   1            Ds18b20WriteByte(0x44);
+ 174   1            Ds18b20Init();
+ 175   1            Delay1ms(1);
+ 176   1            Ds18b20WriteByte(0xcc);
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 4   
+
+ 177   1            Ds18b20WriteByte(0xbe);
+ 178   1      }
+ 179          
+ 180          int Ds18b20ReadTemp()
+ 181          {
+ 182   1            int temp=0;
+ 183   1            unsigned char tmh,tml;
+ 184   1            Ds18b20ReadTempCom();
+ 185   1            tml= Ds18b20ReadByte();
+ 186   1            tmh= Ds18b20ReadByte();
+ 187   1            temp=tmh;
+ 188   1            temp<<=8;
+ 189   1            temp|=tml;
+ 190   1            return temp;
+ 191   1      }
+ 192          
+ 193          //********************************************************************************************************
+             -*************************************
+ 194           /**
+ 195            *@brief           以下为LCD1602子函数
+ 196            *@param   
+ 197            *@return
+ 198           */                                              
+ 199          
+ 200          
+ 201          //发送命令  RS = 0
+ 202          void Write_cmd(unsigned char cmd)
+ 203          {
+ 204   1      
+ 205   1            RS = 0;
+ 206   1            RW = 0;
+ 207   1            EN = 0;
+ 208   1      
+ 209   1            //单片机把要发送的数据放到数据总线里
+ 210   1            Lcdout = cmd;
+ 211   1            
+ 212   1            EN = 1;
+ 213   1            
+ 214   1            _nop_();
+ 215   1      
+ 216   1            EN = 0;
+ 217   1            
+ 218   1            Delayms(1);
+ 219   1      
+ 220   1            
+ 221   1      }
+ 222          void Write_data(unsigned char cmd)
+ 223          {
+ 224   1      
+ 225   1            RS = 1;
+ 226   1            RW = 0;
+ 227   1            EN = 0;
+ 228   1      
+ 229   1            //单片机把要发送的数据放到数据总线里
+ 230   1            Lcdout = cmd;
+ 231   1            
+ 232   1            EN = 1;
+ 233   1            
+ 234   1            _nop_();
+ 235   1      
+ 236   1            EN = 0;
+ 237   1            
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 5   
+
+ 238   1            Delayms(1);
+ 239   1            
+ 240   1      
+ 241   1      }
+ 242          void Lcd_initial()
+ 243          {
+ 244   1      
+ 245   1            Write_cmd(0x01);
+ 246   1            Write_cmd(0x06);
+ 247   1            
+ 248   1            Write_cmd(0x0c);
+ 249   1            Write_cmd(0x38);
+ 250   1            
+ 251   1      
+ 252   1            
+ 253   1            Delayms(1);
+ 254   1            
+ 255   1            
+ 256   1      }
+ 257          
+ 258          void Lcd_write_string(char cmd, char* addr)
+ 259          {
+ 260   1            while(*addr != '\0')
+ 261   1            {
+ 262   2                  Write_cmd(cmd++);
+ 263   2                  Write_data(*addr);
+ 264   2                  addr++;
+ 265   2            }
+ 266   1      }
+ 267          
+ 268          
+ 269          
+ 270          //在第几行第几列显示数字
+ 271          //形参列表（行，列，数字）
+ 272          
+ 273          void Lcd_write_number(char line, char row ,unsigned int number)
+ 274          {
+ 275   1            if(1 == line)
+ 276   1            {
+ 277   2                  Write_cmd(0x80+row-1);
+ 278   2                  Write_data((number/10)+0x30);
+ 279   2                  Write_data((number%10)+0x30);
+ 280   2            }
+ 281   1            else if(2 == line)
+ 282   1            {
+ 283   2                  Write_cmd(0xc0+row-1);
+ 284   2                  Write_data((number/10)+0x30);
+ 285   2                  Write_data((number%10)+0x30);
+ 286   2            }
+ 287   1      }
+ 288          
+ 289          
+ 290          //********************************************************************************************************
+             -*************************************
+ 291          /**
+ 292            *@brief         矩阵键盘函数
+ 293            *@param   
+ 294            *@return
+ 295           */
+ 296          //检测按下
+ 297          unsigned char Matrix_key()
+ 298          {
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 6   
+
+ 299   1            unsigned char n = 0;
+ 300   1            unsigned char m = 0;
+ 301   1            P3=0xf0;
+ 302   1            
+ 303   1            //检测到有按键按下，高四位会有一个变成0
+ 304   1            if((P3&0xf0)!=0xf0);
+ 305   1            {
+ 306   2                  Delayms(10);
+ 307   2                        
+ 308   2                  if((P3&0xf0)!=0xf0);
+ 309   2                  {
+ 310   3                        //取高四位
+ 311   3                        n=P3&0xf0;
+ 312   3                        
+ 313   3                        P3=0x0f;
+ 314   3      
+ 315   3                        //取低四位
+ 316   3                        m=P3&0x0f;
+ 317   3                        
+ 318   3                        return(n+m);
+ 319   3                  }
+ 320   2            }
+ 321   1      }     
+ 322          //通过矩阵键盘按下返回值
+ 323          //unsigned char Matrix_keyReturn()
+ 324          //{
+ 325          //    unsigned char temp;
+ 326          //    
+ 327          //    switch(Matrix_key())
+ 328          //    {
+ 329          //          case 0xee: temp = 1; while(Matrix_key() == 0xee);break;
+ 330          //          case 0xde: temp = 2; break;
+ 331          //          case 0xbe: temp = 3; break;
+ 332          //          case 0x7e: temp = 4; break;
+ 333          //          case 0xed: temp = 5; break;
+ 334          //          case 0xdd: temp = 6; break;
+ 335          //          case 0xbd: temp = 7; break;
+ 336          //          case 0x7d: temp = 8; break;
+ 337          //          case 0xeb: temp = 9; break;
+ 338          //          case 0xdb: temp = 0; break;
+ 339          ////        case 0xbb: temp =11; break;
+ 340          ////        case 0x7b: temp =12; break;
+ 341          ////        case 0xe7: temp =12; break;
+ 342          ////        case 0xd7: temp =12; break;
+ 343          ////        case 0xb7: temp =12; break;
+ 344          ////        case 0x77: temp =12; break;
+ 345          //          
+ 346          //          
+ 347          //    }
+ 348          //    
+ 349          //    return temp;
+ 350          //}
+ 351          //密码数组下标
+ 352          static unsigned char code_num = 0;
+ 353          //输入正确密码返回1要不然为0
+ 354          unsigned char Code()
+ 355          {
+ 356   1            
+ 357   1            unsigned char temp = 0;
+ 358   1            
+ 359   1      
+ 360   1            switch(Matrix_key())
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 7   
+
+ 361   1            {
+ 362   2                  case 0xee: temp = 1;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xee);break;
+ 363   2                  case 0xde: temp = 2;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xde);break;
+ 364   2                  case 0xbe: temp = 3;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xbe);break;
+ 365   2                  case 0x7e: temp = 4;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0x7e);break;
+ 366   2                  case 0xed: temp = 5;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xed);break;
+ 367   2                  case 0xdd: temp = 6;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xdd);break;
+ 368   2                  case 0xbd: temp = 7;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xbd);break;
+ 369   2                  case 0x7d: temp = 8;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0x7d);break;
+ 370   2                  case 0xeb: temp = 9;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xeb);break;
+ 371   2                  case 0xdb: temp = 0;  my_code[code_num] = temp;  code_num++; while(Matrix_key() == 0xdb);break; 
+ 372   2                  
+ 373   2            }
+ 374   1            code_num %= 5;
+ 375   1            
+ 376   1            if(my_code[0] == _code[0] && my_code[1] == _code[1] &&  my_code[2] == _code[2] &&  my_code[3] == _code[3]
+             - &&  my_code[4] == _code[4] )
+ 377   1            {
+ 378   2                  return 1;
+ 379   2            }
+ 380   1            
+ 381   1            
+ 382   1            return 0;
+ 383   1            
+ 384   1      }
+ 385          //********************************************************************************************************
+             -*************************************
+ 386          /**
+ 387            *@brief         ABC设置
+ 388            *@param   
+ 389            *@return
+ 390           */
+ 391          //限制ABC用量
+ 392          void ABC_Limit()
+ 393          {
+ 394   1            User[0] %= 4;
+ 395   1            User[2] %= 4;
+ 396   1            User[4] %= 4;
+ 397   1            User[1] %= 10;
+ 398   1            User[3] %= 10;
+ 399   1            User[5] %= 10;
+ 400   1      }
+ 401          //设置ABC的量
+ 402          void A_B_C_Set()
+ 403          {
+ 404   1            
+ 405   1            if(0xe7 == Matrix_key())
+ 406   1            {
+ 407   2                  User[num]++;
+ 408   2                  while(0xe7 == Matrix_key());
+ 409   2            }else if(0xd7 == Matrix_key())
+ 410   1            {
+ 411   2                  User[num]--;
+ 412   2                  while(0xd7 == Matrix_key());
+ 413   2            }else if(0xb7 == Matrix_key())
+ 414   1            {
+ 415   2                  num++;
+ 416   2                  if(num > 5) {num = 0;}
+ 417   2                  while(0xb7 == Matrix_key());
+ 418   2            }
+ 419   1            ABC_Limit();
+ 420   1            Write_cmd(0xc1);
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 8   
+
+ 421   1            Write_data(':');
+ 422   1            Write_data(User[0]+0x30);
+ 423   1            Write_data(User[1]+0x30);
+ 424   1            Write_cmd(0xc5);
+ 425   1            Write_data(':');
+ 426   1            Write_data(User[2]+0x30);
+ 427   1            Write_data(User[3]+0x30);
+ 428   1            Write_cmd(0xc9);
+ 429   1            Write_data(':');
+ 430   1            Write_data(User[4]+0x30);
+ 431   1            Write_data(User[5]+0x30);
+ 432   1            Write_cmd(0xcd);
+ 433   1            Write_data((num+1)+0x30);
+ 434   1            
+ 435   1      
+ 436   1            
+ 437   1      }
+ 438          
+ 439          //设置ABC用药时间的小时分钟限制
+ 440          void ABCTime_Judge()
+ 441          {
+ 442   1            unsigned char i = 0;
+ 443   1            for(i = 0; i <=5; i+=2)
+ 444   1            {
+ 445   2                  if(ABC_setTime[i] >= 24)
+ 446   2                  {
+ 447   3                        ABC_setTime[i] = 0;
+ 448   3                  }else if(ABC_setTime[i] < 0)
+ 449   2                  {
+ 450   3                        ABC_setTime[i] = 23;
+ 451   3                  }
+ 452   2            }
+ 453   1            
+ 454   1            for(i = 1; i <= 5; i+=2)
+ 455   1            {
+ 456   2                  if(ABC_setTime[i] >= 60)
+ 457   2                  {
+ 458   3                        ABC_setTime[i] = 0;
+ 459   3                  }else if(ABC_setTime[i] < 0)
+ 460   2                  {
+ 461   3                        ABC_setTime[i] = 59;
+ 462   3                  }
+ 463   2            }
+ 464   1            
+ 465   1            
+ 466   1      }
+ 467          
+ 468          //设置ABC用药时间
+ 469          void ABC_SetEatTime()
+ 470          {
+ 471   1            while(Matrix_key() != 0x77 || ABC_setTime[6] < 4)
+ 472   1            {
+ 473   2                  //检查时间是否合法
+ 474   2                  ABCTime_Judge();
+ 475   2                  
+ 476   2                  //如果用药间隔小于4h
+ 477   2                  if(ABC_setTime[6] < 4)
+ 478   2                  {
+ 479   3                        Lcd_write_string(0x8d,"!");
+ 480   3                  }else 
+ 481   2                  {
+ 482   3                        Lcd_write_string(0x8d," ");
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 9   
+
+ 483   3            
+ 484   3                  }
+ 485   2                  //服药间隔小于24
+ 486   2                  ABC_setTime[6] %= 25;
+ 487   2                  if(ABC_setTime[6] < 0) {ABC_setTime[6] = 23;}
+ 488   2                  
+ 489   2                  //设置ABC用药时间
+ 490   2                  Lcd_write_string(0x80,"Set:");
+ 491   2                  Lcd_write_string(0xC0,"A");
+ 492   2                  Lcd_write_number(2,2,ABC_setTime[0]);
+ 493   2                  Lcd_write_string(0xC3,":");
+ 494   2                  Lcd_write_number(2,5,ABC_setTime[1]);
+ 495   2                        
+ 496   2                  Lcd_write_string(0x87,"B");
+ 497   2                  Lcd_write_number(1,9,ABC_setTime[2]);
+ 498   2                  Lcd_write_string(0x8a,":");
+ 499   2                  Lcd_write_number(1,12,ABC_setTime[3]);
+ 500   2                        
+ 501   2                  Lcd_write_string(0xc7,"C");
+ 502   2                  Lcd_write_number(2,9,ABC_setTime[4]);
+ 503   2                  Lcd_write_string(0xca,":");
+ 504   2                  Lcd_write_number(2,12,ABC_setTime[5]);
+ 505   2                  
+ 506   2                  //设置间隔
+ 507   2                  Lcd_write_number(1,15,ABC_setTime[6]);    
+ 508   2                  if(0xe7 == Matrix_key())
+ 509   2                  {
+ 510   3                        ABC_setTime[set_timeI]++;
+ 511   3                        while(0xe7 == Matrix_key());
+ 512   3                  }else if(0xd7 == Matrix_key())
+ 513   2                  {
+ 514   3                        ABC_setTime[set_timeI]--;
+ 515   3                        while(0xd7 == Matrix_key());
+ 516   3                  }else if(0xb7 == Matrix_key())
+ 517   2                  {
+ 518   3                        set_timeI++;
+ 519   3                        if(set_timeI > 6) {set_timeI = 0;}
+ 520   3                        while(0xb7 == Matrix_key());
+ 521   3                  }     
+ 522   2                  
+ 523   2                  //显示下标
+ 524   2                  Lcd_write_number(1,5,(set_timeI+1));
+ 525   2            }
+ 526   1            //清屏
+ 527   1            Write_cmd(0x01);
+ 528   1            //延时防止把后面需要的也清屏了
+ 529   1            Delayms(10);
+ 530   1            
+ 531   1      }
+ 532          
+ 533          unsigned char tempA = 0;
+ 534          unsigned char tempB = 0;
+ 535          unsigned char tempC = 0;
+ 536          
+ 537          
+ 538          //到时间后ABC的灯亮并且提醒
+ 539          unsigned char ABC_Warn()
+ 540          {
+ 541   1            
+ 542   1            if(hour == ABC_setTime[0] && minute == ABC_setTime[1] && User[0] != 0)
+ 543   1            {
+ 544   2                  //吃A药
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 10  
+
+ 545   2                  Awarn_TimeMinute = ABC_setTime[1] + 30;
+ 546   2                  Awarn_TimeHour = ABC_setTime[0];
+ 547   2                  if(Awarn_TimeMinute >= 60)
+ 548   2                  {
+ 549   3                        Awarn_TimeMinute = Awarn_TimeMinute - 60;
+ 550   3                        Awarn_TimeHour = ABC_setTime[0] + 1;
+ 551   3                        
+ 552   3                  }
+ 553   2                  tempA = 1;
+ 554   2      
+ 555   2                  return 1;
+ 556   2            }else if(hour == ABC_setTime[2] && minute == ABC_setTime[3] && User[2] != 0)
+ 557   1            {
+ 558   2                  //吃B药
+ 559   2                  Bwarn_TimeMinute = ABC_setTime[3] + 30;
+ 560   2                  Bwarn_TimeHour = ABC_setTime[2];
+ 561   2                  if(Bwarn_TimeMinute >= 60)
+ 562   2                  {
+ 563   3                        Bwarn_TimeMinute = Bwarn_TimeMinute - 60;
+ 564   3                        Bwarn_TimeHour = ABC_setTime[2] + 1;
+ 565   3                  }
+ 566   2      
+ 567   2                  tempB = 1;
+ 568   2                  return 2;
+ 569   2                  
+ 570   2            }else if(hour == ABC_setTime[4] && minute == ABC_setTime[5] && User[4] != 0)
+ 571   1            {
+ 572   2                  //吃C药
+ 573   2                  Cwarn_TimeMinute = ABC_setTime[5] + 30;
+ 574   2                  Cwarn_TimeHour = ABC_setTime[4];
+ 575   2                  if(Cwarn_TimeMinute >= 60)
+ 576   2                  {
+ 577   3                        Cwarn_TimeMinute = Cwarn_TimeMinute - 60;
+ 578   3                        Cwarn_TimeHour = ABC_setTime[4] + 1;
+ 579   3                  }
+ 580   2                  tempC = 1;
+ 581   2                  return 3;
+ 582   2                  
+ 583   2            }
+ 584   1            return 0;
+ 585   1      }
+ 586          
+ 587          
+ 588          //判断是否吃药了
+ 589          void ABCEat_Judge()
+ 590          {
+ 591   1            //A到时间了没吃药
+ 592   1            if(tempA == 1 && !motor_Flag && User[0] != 0)
+ 593   1            {
+ 594   2                  A_LED = 0; B_LED = 1; C_LED = 1;
+ 595   2                  Lcd_write_string(0x89,"A");
+ 596   2                  
+ 597   2            }else if(tempA == 1 && motor_Flag )
+ 598   1            {//吃了A药
+ 599   2                  
+ 600   2                  A_LED = 1; B_LED = 1; C_LED = 1;
+ 601   2                  Lcd_write_string(0x89,"A!");
+ 602   2                  Delayms(4000);
+ 603   2                  Lcd_write_string(0x89,"  ");
+ 604   2                  
+ 605   2                  User[0]--;
+ 606   2                  if(User[0] < 0 ) {User[0] = 0;}
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 11  
+
+ 607   2                  //打开后标志清零
+ 608   2                  motor_Flag = 0;
+ 609   2                  ABC_setTime[0] += ABC_setTime[6];
+ 610   2                  Awarn_TimeMinute = 25;
+ 611   2                  Awarn_TimeHour = 25;
+ 612   2                  
+ 613   2                  tempA = 0;
+ 614   2            }
+ 615   1            
+ 616   1            
+ 617   1            
+ 618   1                  //B到时间了没吃药
+ 619   1            if(tempB == 1 && !motor_Flag && User[2] != 0)
+ 620   1            {
+ 621   2                  A_LED = 1; B_LED = 0; C_LED = 1;
+ 622   2                  Lcd_write_string(0x89,"B");
+ 623   2                  
+ 624   2            }else if(tempB == 1 && motor_Flag )
+ 625   1            {//吃了B药
+ 626   2                  
+ 627   2                  A_LED = 1; B_LED = 1; C_LED = 1;
+ 628   2                  Lcd_write_string(0x89,"B!");
+ 629   2                  Delayms(4000);
+ 630   2                  Lcd_write_string(0x89,"  ");
+ 631   2                  
+ 632   2                  User[2]--;
+ 633   2                  if(User[2] < 0 ) {User[2] = 0;}
+ 634   2                  //打开后标志清零
+ 635   2                  motor_Flag = 0;
+ 636   2                  ABC_setTime[2] += ABC_setTime[6];
+ 637   2                  Bwarn_TimeMinute = 25;
+ 638   2                  Bwarn_TimeHour = 25;
+ 639   2                  
+ 640   2                  tempB = 0;
+ 641   2            }
+ 642   1            
+ 643   1            
+ 644   1            
+ 645   1            
+ 646   1            
+ 647   1            
+ 648   1            //C到时间了没吃药
+ 649   1            if(tempC == 1 && !motor_Flag && User[4] != 0)
+ 650   1            {
+ 651   2                  A_LED = 1; B_LED = 1; C_LED = 0;
+ 652   2                  Lcd_write_string(0x89,"C");
+ 653   2                  
+ 654   2            }else if(tempC == 1 && motor_Flag )
+ 655   1            {//吃了C药
+ 656   2                  
+ 657   2                  A_LED = 1; B_LED = 1; C_LED = 1;
+ 658   2                  
+ 659   2                  Lcd_write_string(0x89,"C!");
+ 660   2                  Delayms(4000);
+ 661   2                  Lcd_write_string(0x89,"  ");
+ 662   2                  
+ 663   2                  User[4]--;
+ 664   2                  if(User[4] < 0 ) {User[0] = 0;}
+ 665   2                  //打开后标志清零
+ 666   2                  motor_Flag = 0;
+ 667   2                  ABC_setTime[4] += ABC_setTime[6];
+ 668   2                  Cwarn_TimeMinute = 25;
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 12  
+
+ 669   2                  Cwarn_TimeHour = 25;
+ 670   2                  tempC = 0;
+ 671   2            }
+ 672   1      
+ 673   1            
+ 674   1            
+ 675   1            
+ 676   1      }
+ 677          //********************************************************************************************************
+             -*************************************
+ 678          
+ 679          /**
+ 680            *@brief         定时器0初始化
+ 681            *@param   
+ 682            *@return
+ 683           */
+ 684          void Timer0_Init()
+ 685          {
+ 686   1            //打开定时器0的1模式
+ 687   1            TMOD &= 0xf0;
+ 688   1            TMOD |= 0x01;
+ 689   1            
+ 690   1            //设置TCON
+ 691   1            TF0 = 0;
+ 692   1            TR0 = 1;
+ 693   1            
+ 694   1            //设置计时时间
+ 695   1            //这里设置10000 == 10000us == 10ms == 0.01s
+ 696   1            //TH0和TL0为八位，分别把一个十六位的高八位低八位赋值
+ 697   1            TH0 = (65535 - 10000)/256;
+ 698   1            TL0 = (65535 - 10000)%256;
+ 699   1            
+ 700   1            //打开中断
+ 701   1            ET0 = 1;
+ 702   1            //总中断
+ 703   1            EA = 1;
+ 704   1      }
+ 705          
+ 706          //时钟判断函数
+ 707          void Time_Judge()
+ 708          {
+ 709   1            if(second >= 60)
+ 710   1            {
+ 711   2                  minute++;
+ 712   2                  second = 0;
+ 713   2            }else if(minute >= 60)
+ 714   1            {
+ 715   2                  hour++;
+ 716   2                  minute = 0;
+ 717   2            }else if(hour >= 24)
+ 718   1            {
+ 719   2                  hour = 0;
+ 720   2            }else if(minute < 0)
+ 721   1            {
+ 722   2                  minute = 59;
+ 723   2                  hour--;
+ 724   2            }else if(hour < 0)
+ 725   1            {
+ 726   2                  hour = 23;
+ 727   2            }
+ 728   1      }
+ 729          
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 13  
+
+ 730          //时钟显示函数
+ 731          void Time_Show()
+ 732          {
+ 733   1            Time_Judge();
+ 734   1            Lcd_write_string(0X82,":");
+ 735   1            Lcd_write_number(1,1,hour);
+ 736   1            Lcd_write_number(1,4,minute);
+ 737   1      
+ 738   1      }
+ 739          
+ 740          //操作时钟
+ 741          void Time_Set()
+ 742          {
+ 743   1            //分加
+ 744   1            if(0xbb == Matrix_key())
+ 745   1            {
+ 746   2                  Delayms(10);
+ 747   2                  if(0xbb == Matrix_key())
+ 748   2                  {
+ 749   3                        minute += 5;
+ 750   3                        while(0xbb == Matrix_key());
+ 751   3                  }
+ 752   2            }
+ 753   1            //分减
+ 754   1            if(0x7b == Matrix_key())
+ 755   1            {
+ 756   2                  Delayms(10);
+ 757   2                  if(0x7b == Matrix_key())
+ 758   2                  {
+ 759   3                        minute --;
+ 760   3                        while(0x7b == Matrix_key());
+ 761   3                  }
+ 762   2            }
+ 763   1      }
+ 764          
+ 765          //********************************************************************************************************
+             -*************************************
+ 766          /**
+ 767            *@brief          电机键盘函数
+ 768            *@param   
+ 769            *@return
+ 770           */
+ 771          
+ 772          void Motor()
+ 773          {
+ 774   1            unsigned char i = 0;
+ 775   1            unsigned char j = 0;
+ 776   1            if(0 == Motor_open && 0 == tempFlag)
+ 777   1            {
+ 778   2                  Delayms(10);
+ 779   2                  if(0 == Motor_open)
+ 780   2                  {
+ 781   3                        for(i = 0; i < 8; i++)
+ 782   3                        {
+ 783   4                              P1 = zhengZhuan[i];
+ 784   4                              Delayms(100);
+ 785   4                                    
+ 786   4                        }
+ 787   3                  }
+ 788   2                  
+ 789   2      
+ 790   2            }else if(0 == Motor_off && 0 == tempFlag)
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 14  
+
+ 791   1            {
+ 792   2                  Delayms(10);
+ 793   2                  if(0 == Motor_off)
+ 794   2                  {
+ 795   3                        for(i = 0; i < 8; i++)
+ 796   3                        {
+ 797   4                              P1 = fanZhuan[i];
+ 798   4                              Delayms(100);
+ 799   4                                    
+ 800   4                        }
+ 801   3                  }
+ 802   2                  motor_Flag = 1;
+ 803   2            }
+ 804   1      }
+ 805          
+ 806          
+ 807          //********************************************************************************************************
+             -*************************************
+ 808          //********************************************************************************************************
+             -*************************************
+ 809          //********************************************************************************************************
+             -*************************************
+ 810          
+ 811          void main()
+ 812          {
+ 813   1      
+ 814   1            //接受温度
+ 815   1            unsigned int tmp;
+ 816   1            //LCD1602初始化
+ 817   1            Lcd_initial();
+ 818   1            //定时器0初始化
+ 819   1            Timer0_Init();
+ 820   1      
+ 821   1            //显示学号后两位
+ 822   1            Lcd_write_string(0xce,"47");
+ 823   1            
+ 824   1            
+ 825   1            //一进去系统设置ABC的吃药时间，设置完后，吃药的时间会存储在数组中
+ 826   1            ABC_SetEatTime();
+ 827   1            
+ 828   1      
+ 829   1            //一进去系统设置完时间设置用量
+ 830   1            while(Matrix_key() != 0xee)
+ 831   1            {
+ 832   2                  //设置ABC用量
+ 833   2                  Lcd_write_string(0xc0,"A");
+ 834   2                  Lcd_write_string(0xc4,"B");
+ 835   2                  Lcd_write_string(0xc8,"C");
+ 836   2                  A_B_C_Set();
+ 837   2                  
+ 838   2            }
+ 839   1            Write_cmd(0x01);
+ 840   1            //延时防止把后面需要的也清屏了
+ 841   1            Delayms(10);
+ 842   1            
+ 843   1            
+ 844   1            
+ 845   1            while(1)
+ 846   1            {
+ 847   2                  
+ 848   2                  
+ 849   2                  //用药时间超过半小时
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 15  
+
+ 850   2                  while ((minute == Awarn_TimeMinute && hour == Awarn_TimeHour && !motor_Flag)
+ 851   2                        || (minute == Bwarn_TimeMinute && hour == Bwarn_TimeHour && !motor_Flag)
+ 852   2                        || (minute == Cwarn_TimeMinute && hour == Cwarn_TimeHour && !motor_Flag))
+ 853   2                  {
+ 854   3                              
+ 855   3                        //显示密码
+ 856   3                        Write_cmd(0x8a);
+ 857   3                        Write_data(my_code[0]+0x30);
+ 858   3                        Write_data(my_code[1]+0x30);
+ 859   3                        Write_data(my_code[2]+0x30);
+ 860   3                        Write_data(my_code[3]+0x30);
+ 861   3                        Write_data(my_code[4]+0x30);
+ 862   3                        ABC_Warn();
+ 863   3                        Motor();
+ 864   3                        ABCEat_Judge();
+ 865   3                        Code();
+ 866   3                        if(motor_Flag == 1 && Code()){ break;}
+ 867   3                        
+ 868   3                  }
+ 869   2                  Lcd_write_string(0x8a,"     ");
+ 870   2                  
+ 871   2                  
+ 872   2                  //一天后重新设置吃药时间和ABC用量
+ 873   2                  if(hour > 23)
+ 874   2                  {
+ 875   3                        //清屏
+ 876   3                        Write_cmd(0x01);
+ 877   3                        //延时防止把后面需要的也清屏了
+ 878   3                        Delayms(10);
+ 879   3                        //这里是设置吃药的时间
+ 880   3                        ABC_SetEatTime();
+ 881   3                        
+ 882   3                        //这里是设置ABC用量
+ 883   3                        while(Matrix_key() != 0xee)
+ 884   3                        {
+ 885   4                              //设置ABC用量
+ 886   4                              Lcd_write_string(0xc0,"A");
+ 887   4                              Lcd_write_string(0xc4,"B");
+ 888   4                              Lcd_write_string(0xc8,"C");
+ 889   4                              A_B_C_Set();
+ 890   4                              
+ 891   4                        }
+ 892   3                        Write_cmd(0x01);
+ 893   3                        //延时防止把后面需要的也清屏了
+ 894   3                        Delayms(10);
+ 895   3                        
+ 896   3                  }
+ 897   2                  
+ 898   2                  
+ 899   2                  //显示ABC剩余的吃药次数
+ 900   2                  Lcd_write_string(0xc0,"A:");
+ 901   2                  Write_cmd(0xc2); Write_data(User[0] + 0x30);
+ 902   2                  
+ 903   2                  Lcd_write_string(0xc4,"B:");
+ 904   2                  Write_cmd(0xc6); Write_data(User[2] + 0x30);
+ 905   2                  
+ 906   2                  Lcd_write_string(0xc8,"C:");
+ 907   2                  Write_cmd(0xca); Write_data(User[4] + 0x30);
+ 908   2                  
+ 909   2                  //显示学号后两位
+ 910   2                  Lcd_write_string(0xce,"47");
+ 911   2                  //接受温度
+C51 COMPILER V9.54   MAIN                                                                  01/04/2023 21:11:43 PAGE 16  
+
+ 912   2                  //为什么/16 是因为ds18b20由十六位组成，然后低四位储存的是小数，导致实际温度比返回值小2的四次方，所以要除
+             -16
+ 913   2                  tmp = (Ds18b20ReadTemp()/16);
+ 914   2                  
+ 915   2                  //判断体温有没有大于35
+ 916   2                  if(tmp > 35) {tempFlag = 1;}
+ 917   2                  else {tempFlag = 0;}
+ 918   2                  if(tempFlag) {Lcd_write_string(0xcc,"!");}
+ 919   2                  else {Lcd_write_string(0xcc," ");}
+ 920   2                  
+ 921   2                  //步进电机
+ 922   2                  Motor();
+ 923   2      //          Motor_Judge_ABC();
+ 924   2                  
+ 925   2                  //LCD显示温度
+ 926   2                  Lcd_write_string(0x86,"T");
+ 927   2                  Lcd_write_number(1,8,tmp);
+ 928   2      
+ 929   2                  //时钟显示 设置 ABC设置
+ 930   2                  Time_Show();
+ 931   2                  Time_Set();
+ 932   2                  
+ 933   2                  //到达设定的吃药时间
+ 934   2                  ABC_Warn();
+ 935   2                  ABCEat_Judge();
+ 936   2      
+ 937   2            }
+ 938   1            
+ 939   1            
+ 940   1            
+ 941   1            
+ 942   1      }
+ 943          
+ 944          
+ 945          //定义定时器0中断
+ 946          void Timer0_Routine() interrupt 1
+ 947          {
+ 948   1            timer0_count++;
+ 949   1      //    timer0_count == 100表示过去1s
+ 950   1            if( 100 == timer0_count)
+ 951   1            {
+ 952   2                  second++;
+ 953   2                  timer0_count = 0;
+ 954   2            }
+ 955   1            //复位
+ 956   1            TH0 = (65535 - 10000)/256;
+ 957   1            TL0 = (65535 - 10000)%256;
+ 958   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2562    ----
+   CONSTANT SIZE    =     49    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     58      10
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
