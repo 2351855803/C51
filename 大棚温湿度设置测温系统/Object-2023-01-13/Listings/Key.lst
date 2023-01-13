@@ -1,0 +1,90 @@
+C51 COMPILER V9.54   KEY                                                                   01/13/2023 16:43:47 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\Key.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE Key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Ke
+                    -y.lst) TABS(6) OBJECT(.\Objects\Key.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Delay.h"
+   3          #include "LCD1602.h"
+   4          
+   5          /**
+   6            *@brief   通过按键来选择模式
+   7            *@param   
+   8            *@return  按键代表的模式  
+   9           */
+  10          unsigned char Matrix_key()
+  11          {
+  12   1            unsigned char n,m;
+  13   1            P1=0xf0;
+  14   1            
+  15   1            //检测到有按键按下，高四位会有一个变成0
+  16   1            if((P1&0xf0)!=0xf0);
+  17   1            {
+  18   2                  Delayms(10);
+  19   2                        
+  20   2                  if((P1&0xf0)!=0xf0);
+  21   2                  {
+  22   3                        //取高四位
+  23   3                        n=P1&0xf0;
+  24   3                        
+  25   3                        P1=0x0f;
+  26   3      
+  27   3                        //取低四位
+  28   3                        m=P1&0x0f;
+  29   3                        
+  30   3                        return(n+m);
+  31   3                  }
+  32   2            }
+  33   1      }
+  34          
+  35          /**
+  36            *@brief   通过矩阵键盘来设置温度湿度上下限
+  37            *@param   分别是 湿度上限 湿度下线 温度上限 温度下线
+  38            *@return  void
+  39           */
+  40          void Matrix_Set_DH(unsigned char * humHWarn, unsigned char * humLWarn,\
+  41                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+  42          {
+  43   1            //湿度上下限加减
+  44   1            if(0x77 == Matrix_key()) {(*humHWarn)++; while(0x77 == Matrix_key());}
+  45   1            if(0x7b == Matrix_key()) {(*humHWarn)--; while(0x7b == Matrix_key());}
+  46   1            if(0x7d == Matrix_key()) {(*humLWarn)++; while(0x7d == Matrix_key());}
+  47   1            if(0x7e == Matrix_key()) {(*humLWarn)--; while(0x7e == Matrix_key());}
+  48   1            
+  49   1            //温度上下限加减
+  50   1            if(0xb7 == Matrix_key()) {(*tmpHWarn)++; while(0xb7 == Matrix_key());}
+  51   1            if(0xbb == Matrix_key()) {(*tmpHWarn)--; while(0xbb == Matrix_key());}
+  52   1            if(0xbd == Matrix_key()) {(*tmpLWarn)++; while(0xbd == Matrix_key());}
+  53   1            if(0xbe == Matrix_key()) {(*tmpLWarn)--; while(0xbe == Matrix_key());}
+  54   1      }
+C51 COMPILER V9.54   KEY                                                                   01/13/2023 16:43:47 PAGE 2   
+
+  55          
+  56          
+  57          
+  58          
+  59          
+  60          
+  61          
+  62          
+  63          
+  64          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    230    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      12
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
