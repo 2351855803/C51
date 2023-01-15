@@ -1,0 +1,12 @@
+".\Objects\main.obj",
+".\Objects\Delay.obj",
+".\Objects\DHT11.obj",
+".\Objects\LCD1602.obj",
+".\Objects\Timer0.obj",
+".\Objects\Key.obj",
+".\Objects\UART.obj",
+".\Objects\AT24C02.obj",
+".\Objects\I2C.obj" 
+TO ".\Objects\Object" 
+PRINT(".\Listings\Object.m51") RAMSIZE(256) 
+DISABLEWARNING (16) 
