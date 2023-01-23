@@ -1,0 +1,134 @@
+C51 COMPILER V9.54   MAIN                                                                  01/23/2023 00:00:07 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\m
+                    -ain.lst) TABS(6) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "DHT11.h"
+   3          #include "Delay.h"
+   4          #include "LCD1602.h"
+   5          #include "UART.h"
+   6          #include "Timer0.h"
+   7          #include "Key.h"
+   8          #include "AT24C02.h"
+   9          
+  10          //电机
+  11          sbit Motor = P3^7;
+  12          
+  13          
+  14          
+  15          ////进入定时器计数
+  16          //unsigned char Timer_count = 0;
+  17          //电机计数
+  18          char Motor_count = 0;
+  19          //判断闪烁
+  20          //static unsigned char flag = 1;
+  21          //unsigned char flag2 = 0;
+  22          //电机PWM
+  23          static char compare = 0;
+  24          
+  25          //警戒值
+  26          unsigned char humHWarn;
+  27          unsigned char humLWarn;
+  28          unsigned char tmpHWarn;
+  29          unsigned char tmpLWarn;
+  30          
+  31          
+  32          int main()
+  33          {
+  34   1      
+  35   1      
+  36   1            //DHT11上电后至少要延时1s
+  37   1            Delayms(1500);
+  38   1            
+  39   1            //初始化
+  40   1            Lcd_initial();
+  41   1            Timer0_Init();
+  42   1            UART_Init();
+  43   1            
+  44   1            //把保存的警戒值赋值进去
+  45   1            DHT11_SaveDH(&humHWarn,&humLWarn,&tmpHWarn,&tmpLWarn);
+  46   1      
+  47   1            
+  48   1            
+  49   1            //显示进去的界面
+  50   1            LCD_ShowBegin();
+  51   1            //设置上下限
+  52   1            LCD_ShowSetTH(&humHWarn,&humLWarn,&tmpHWarn,&tmpLWarn);
+  53   1            compare = DHT11_H_Alarm(&humHWarn,&tmpHWarn);
+  54   1            //电机标志位清零
+C51 COMPILER V9.54   MAIN                                                                  01/23/2023 00:00:07 PAGE 2   
+
+  55   1            Motor = 0;
+  56   1            
+  57   1            
+  58   1            while(1)
+  59   1            {
+  60   2                  
+  61   2      
+  62   2                  DHT11_LCD1602_Show();
+  63   2                  
+  64   2                  //设置按键进入
+  65   2                  if(0x77 == Matrix_key()) {while(0x77 == Matrix_key()); LCD_ShowSetTH(&humHWarn,&humLWarn,&tmpHWarn,&tmpL
+             -Warn);}
+  66   2                  
+  67   2                  //超过某个值电机转动
+  68   2                  //温湿度高操作
+  69   2                  compare = DHT11_H_Alarm(&humHWarn,&tmpHWarn);
+  70   2                  //温湿度低操作
+  71   2                  DHT11_L_Alarm(&humLWarn,&tmpLWarn);
+  72   2                  
+  73   2                  //当未出现异常，电机停止
+  74   2                  if(0 == compare) {Motor = 0;}
+  75   2                  
+  76   2            }
+  77   1            
+  78   1            
+  79   1            
+  80   1            return 0;
+  81   1      }
+  82          
+  83          
+  84          void Timer_Routine() interrupt 1
+  85          {
+  86   1            
+  87   1            
+  88   1            if(Motor_count < compare)
+  89   1            {
+  90   2                  
+  91   2                  Motor = 1;
+  92   2                  
+  93   2            }else if
+  94   1            (Motor_count >= compare)
+  95   1            {
+  96   2                  Motor = 0;
+  97   2      
+  98   2            }
+  99   1            Motor_count++;
+ 100   1            Motor_count %= 10;
+ 101   1            //复位定时器
+ 102   1            TH0 = (65535-10000)/256;
+ 103   1            TL0 = (65535-10000)%256;
+ 104   1      }
+*** WARNING C294 IN LINE 80 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    317    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      6    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.54   MAIN                                                                  01/23/2023 00:00:07 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
