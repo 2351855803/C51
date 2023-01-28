@@ -1,0 +1,192 @@
+C51 COMPILER V9.54   KEY                                                                   01/28/2023 17:55:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\Key.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE Key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Ke
+                    -y.lst) TABS(6) OBJECT(.\Objects\Key.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "Delay.h"
+   3          #include "LCD1602.h"
+   4          #include "AT24C02.h"
+   5          #include "SYN6288.h"
+   6          /**
+   7            *@brief   通过按键来选择模式
+   8            *@param   
+   9            *@return  按键代表的模式  
+  10           */
+  11          unsigned char Matrix_key()
+  12          {
+  13   1            unsigned char n,m;
+  14   1            P1=0xf0;
+  15   1            
+  16   1            //检测到有按键按下，高四位会有一个变成0
+  17   1            if((P1&0xf0)!=0xf0);
+  18   1            {
+  19   2                  Delayms(10);
+  20   2                        
+  21   2                  if((P1&0xf0)!=0xf0);
+  22   2                  {
+  23   3                        //取高四位
+  24   3                        n=P1&0xf0;
+  25   3                        
+  26   3                        P1=0x0f;
+  27   3      
+  28   3                        //取低四位
+  29   3                        m=P1&0x0f;
+  30   3                        
+  31   3                        return(n+m);
+  32   3                  }
+  33   2            }
+  34   1      }
+  35          
+  36          /**
+  37            *@brief   通过矩阵键盘来设置温度湿度上下限
+  38            *@param   分别是 湿度上限 湿度下线 温度上限 温度下线
+  39            *@return  void
+  40           */
+  41          void Matrix_Set_DH(unsigned char * humHWarn, unsigned char * humLWarn,\
+  42                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+  43          {
+  44   1            //湿度上下限加减
+  45   1            if(0x77 == Matrix_key()) {(*humHWarn)++; AT24C02_Write(1,(*humHWarn)); while(0x77 == Matrix_key());}
+  46   1            if(0x7b == Matrix_key()) {(*humHWarn)--; AT24C02_Write(1,(*humHWarn)); while(0x7b == Matrix_key());}
+  47   1            if(0x7d == Matrix_key()) {(*humLWarn)++; AT24C02_Write(2,(*humLWarn)); while(0x7d == Matrix_key());}
+  48   1            if(0x7e == Matrix_key()) {(*humLWarn)--; AT24C02_Write(2,(*humLWarn)); while(0x7e == Matrix_key());}
+  49   1            
+  50   1            //温度上下限加减
+  51   1            if(0xb7 == Matrix_key()) {(*tmpHWarn)++; AT24C02_Write(3,(*tmpHWarn)); while(0xb7 == Matrix_key());}
+  52   1            if(0xbb == Matrix_key()) {(*tmpHWarn)--; AT24C02_Write(3,(*tmpHWarn)); while(0xbb == Matrix_key());}
+  53   1            if(0xbd == Matrix_key()) {(*tmpLWarn)++; AT24C02_Write(4,(*tmpLWarn)); while(0xbd == Matrix_key());}
+  54   1            if(0xbe == Matrix_key()) {(*tmpLWarn)--; AT24C02_Write(4,(*tmpLWarn)); while(0xbe == Matrix_key());}
+C51 COMPILER V9.54   KEY                                                                   01/28/2023 17:55:05 PAGE 2   
+
+  55   1            
+  56   1      
+  57   1      }
+  58          
+  59          
+  60          /**
+  61            *@brief   通过选择来进行一键设置
+  62            *@param   温湿度上下限预警值
+  63            *@return  void
+  64           */
+  65          void Key_OnetouchSet(unsigned char * humHWarn, unsigned char * humLWarn,\
+  66                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+  67          {
+  68   1            char i;
+  69   1            Write_cmd(0x01);
+  70   1            Delayms(100);
+  71   1            for(i = 15; i >= 0; i--)
+  72   1            {
+  73   2                  Lcd_write_string(0x80+i,"OnetouchSet: ");
+  74   2                  Delayms(300);
+  75   2            }     
+  76   1            SYN_FrameInfo(0, "[v5][t5]一键设置模式");
+  77   1            Delayms(5000);
+  78   1      
+  79   1            while(0xee != Matrix_key())
+  80   1            {
+  81   2                  //一键设置番茄最佳温湿度
+  82   2                  if(0xd7 == Matrix_key())
+  83   2                  {
+  84   3                        Lcd_write_string(0xc0,"            ");
+  85   3                        Lcd_write_string(0xc0,"Toamato!");
+  86   3                        (*humHWarn) = 60;
+  87   3                        AT24C02_Write(1,(*humHWarn));
+  88   3                        Delayms(20);
+  89   3                        (*humLWarn) = 30;
+  90   3                        AT24C02_Write(2,(*humLWarn));
+  91   3                        Delayms(20);
+  92   3                        (*tmpHWarn) = 30;
+  93   3                        AT24C02_Write(3,(*tmpHWarn));
+  94   3                        Delayms(20);
+  95   3                        (*tmpLWarn) = 25;
+  96   3                        AT24C02_Write(4,(*tmpLWarn));
+  97   3                        SYN_FrameInfo(0, "[v5][t5]设置番茄成功");
+  98   3                        Delayms(5000);
+  99   3                  }
+ 100   2                  //一键设置茄子最佳温湿度
+ 101   2                  if(0xdb == Matrix_key())
+ 102   2                  {
+ 103   3                        Lcd_write_string(0xc0,"            ");
+ 104   3                        Lcd_write_string(0xc0,"Eggplant!");
+ 105   3                        (*humHWarn) = 40;
+ 106   3                        AT24C02_Write(1,(*humHWarn));
+ 107   3                        Delayms(20);
+ 108   3                        (*humLWarn) = 30;
+ 109   3                        AT24C02_Write(2,(*humLWarn));
+ 110   3                        Delayms(20);
+ 111   3                        (*tmpHWarn) = 30;
+ 112   3                        AT24C02_Write(3,(*tmpHWarn));
+ 113   3                        Delayms(20);
+ 114   3                        (*tmpLWarn) = 15;
+ 115   3                        AT24C02_Write(4,(*tmpLWarn));
+ 116   3                        SYN_FrameInfo(0, "[v5][t5]设置茄子成功");
+C51 COMPILER V9.54   KEY                                                                   01/28/2023 17:55:05 PAGE 3   
+
+ 117   3                        Delayms(5000);
+ 118   3                  }           
+ 119   2                  //一键设置胡萝卜最佳温湿度
+ 120   2                  if(0xdd == Matrix_key())
+ 121   2                  {
+ 122   3                        Lcd_write_string(0xc0,"            ");
+ 123   3                        Lcd_write_string(0xc0,"Carrot!");
+ 124   3                        (*humHWarn) = 50;
+ 125   3                        AT24C02_Write(1,(*humHWarn));
+ 126   3                        Delayms(20);
+ 127   3                        (*humLWarn) = 35;
+ 128   3                        AT24C02_Write(2,(*humLWarn));
+ 129   3                        Delayms(20);
+ 130   3                        (*tmpHWarn) = 30;
+ 131   3                        AT24C02_Write(3,(*tmpHWarn));
+ 132   3                        Delayms(20);
+ 133   3                        (*tmpLWarn) = 13;
+ 134   3                        AT24C02_Write(4,(*tmpLWarn));
+ 135   3                        SYN_FrameInfo(0, "[v5][t5]设置胡萝卜成功");
+ 136   3                        Delayms(5000);
+ 137   3                  }           
+ 138   2                  //一键设置韭菜最佳温湿度
+ 139   2                  if(0xde == Matrix_key())
+ 140   2                  {
+ 141   3                        Lcd_write_string(0xc0,"            ");
+ 142   3                        Lcd_write_string(0xc0,"Leek!");
+ 143   3                        (*humHWarn) = 70;
+ 144   3                        AT24C02_Write(1,(*humHWarn));
+ 145   3                        Delayms(20);
+ 146   3                        (*humLWarn) = 40;
+ 147   3                        AT24C02_Write(2,(*humLWarn));
+ 148   3                        Delayms(20);
+ 149   3                        (*tmpHWarn) = 25;
+ 150   3                        AT24C02_Write(3,(*tmpHWarn));
+ 151   3                        Delayms(20);
+ 152   3                        (*tmpLWarn) = 20;
+ 153   3                        AT24C02_Write(4,(*tmpLWarn));
+ 154   3                        SYN_FrameInfo(0, "[v5][t5]设置芹菜成功");
+ 155   3                        Delayms(5000);
+ 156   3                  }
+ 157   2            }
+ 158   1            Write_cmd(0x01);
+ 159   1            Delayms(100);
+ 160   1      }
+ 161          
+ 162          
+ 163          
+ 164          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1104    ----
+   CONSTANT SIZE    =    167    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      25
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
