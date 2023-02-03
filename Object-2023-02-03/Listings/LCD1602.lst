@@ -1,0 +1,216 @@
+C51 COMPILER V9.54   LCD1602                                                               02/03/2023 12:39:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\Objects\LCD1602.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE LCD1602.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\LCD1602.lst) TABS(6) OBJECT(.\Objects\LCD1602.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <intrins.h>
+   3          #include "Delay.h"
+   4          #include "Key.h"
+   5          #include "AT24C02.h"
+   6          #include "DHT11.h"
+   7          #include "SYN6288.h"
+   8          //定义寄存器
+   9          #define Lcdout P0
+  10          
+  11          
+  12          //定义引脚
+  13          sbit RS = P2^6;
+  14          sbit RW = P2^5;
+  15          sbit EN = P2^7;
+  16          
+  17          
+  18          
+  19          //**************************************************************
+  20          //----------------------------  Write_cmd 和 Write_data 差别在RS电平
+  21          //发送命令  RS = 0
+  22          void Write_cmd(unsigned char cmd)
+  23          {
+  24   1      
+  25   1            RS = 0;
+  26   1            RW = 0;
+  27   1            EN = 0;
+  28   1      
+  29   1            //单片机把要发送的数据放到数据总线里
+  30   1            Lcdout = cmd;
+  31   1            
+  32   1            EN = 1;
+  33   1            
+  34   1            _nop_();
+  35   1      
+  36   1            EN = 0;
+  37   1            
+  38   1            Delayms(1);
+  39   1      
+  40   1            
+  41   1      }
+  42          //**************************************************************
+  43          //发送数据 RS = 1
+  44          void Write_data(unsigned char cmd)
+  45          {
+  46   1      
+  47   1            RS = 1;
+  48   1            RW = 0;
+  49   1            EN = 0;
+  50   1      
+  51   1            //单片机把要发送的数据放到数据总线里
+  52   1            Lcdout = cmd;
+  53   1            
+  54   1            EN = 1;
+C51 COMPILER V9.54   LCD1602                                                               02/03/2023 12:39:42 PAGE 2   
+
+  55   1            
+  56   1            _nop_();
+  57   1      
+  58   1            EN = 0;
+  59   1            
+  60   1            Delayms(1);
+  61   1            
+  62   1      
+  63   1      }
+  64          //**************************************************************
+  65          void Lcd_initial()
+  66          {
+  67   1      
+  68   1            Write_cmd(0x01);
+  69   1            Write_cmd(0x06);
+  70   1            
+  71   1            Write_cmd(0x0c);
+  72   1            Write_cmd(0x38);
+  73   1            
+  74   1      
+  75   1            
+  76   1            Delayms(1);
+  77   1            
+  78   1            
+  79   1      }
+  80          //**************************************************************
+  81          void Lcd_write_string(char cmd, char* addr)
+  82          {
+  83   1            while(*addr != '\0')
+  84   1            {
+  85   2                  Write_cmd(cmd++);
+  86   2                  Write_data(*addr);
+  87   2                  addr++;
+  88   2            }
+  89   1      }
+  90          
+  91          //**************************************************************
+  92          
+  93          //在第几行第几列显示数字
+  94          //形参列表（行，列，数字）
+  95          
+  96          //**************************************************************
+  97          void Lcd_write_number(char line, char row ,unsigned char number)
+  98          {
+  99   1            if(1 == line)
+ 100   1            {
+ 101   2                  Write_cmd(0x80+row-1);
+ 102   2            
+ 103   2                  Write_data((number/10)+0x30);
+ 104   2                  Write_data((number%10)+0x30);
+ 105   2            }
+ 106   1            else if(2 == line)
+ 107   1            {
+ 108   2                  Write_cmd(0xc0+row-1);
+ 109   2                  
+ 110   2                  Write_data((number/10)+0x30);
+ 111   2                  Write_data((number%10)+0x30);
+ 112   2            }
+ 113   1      }
+ 114          
+ 115          /**
+ 116            *@brief   LCD显示开始界面
+C51 COMPILER V9.54   LCD1602                                                               02/03/2023 12:39:42 PAGE 3   
+
+ 117            *@param   void
+ 118            *@return  void
+ 119           */
+ 120          void LCD_ShowBegin()
+ 121          {
+ 122   1            char i;
+ 123   1            
+ 124   1            for(i = 15; i >= 0; i--)
+ 125   1            {
+ 126   2                  Lcd_write_string(0x80+i,"Welcome to use!");
+ 127   2                  Delayms(300);
+ 128   2            }
+ 129   1            for(i = 15; i >= 0; i--)
+ 130   1            {
+ 131   2                  Lcd_write_string(0xc0+i,"Please set!   ->");
+ 132   2                  Delayms(300);
+ 133   2            }
+ 134   1            SYN_FrameInfo(0, "[v5][t5]欢请使用请设置上下限");
+ 135   1            Delayms(10000);
+ 136   1            while(0xee != Matrix_key());
+ 137   1            Delayms(100);
+ 138   1            Write_cmd(0x01);
+ 139   1            Delayms(100);
+ 140   1            
+ 141   1            
+ 142   1      }
+ 143          
+ 144          
+ 145          /**
+ 146            *@brief   LCD显示设置温湿度界面
+ 147            *@param   void
+ 148            *@return  void
+ 149           */
+ 150          void LCD_ShowSetTH(unsigned char * humHWarn, unsigned char * humLWarn,\
+ 151                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+ 152          {
+ 153   1            Write_cmd(0x01);
+ 154   1            while(0xee != Matrix_key())
+ 155   1            { 
+ 156   2                  if(0xe7 == Matrix_key()) { Key_OnetouchSet(humHWarn,humLWarn,tmpHWarn,tmpLWarn);}
+ 157   2                  Matrix_Set_DH(humHWarn,humLWarn,tmpHWarn,tmpLWarn);
+ 158   2                  DHT11_SetAlarn(humHWarn,humLWarn,tmpHWarn,tmpLWarn);
+ 159   2                  
+ 160   2                  Lcd_write_string(0x80,"hum:");
+ 161   2                  Lcd_write_string(0xc0,"tmp:");
+ 162   2                  Lcd_write_string(0x85,"MAX");
+ 163   2                  
+ 164   2                  Lcd_write_number(1,9,*humHWarn);
+ 165   2                  
+ 166   2                  Lcd_write_string(0x8B,"MIN");       
+ 167   2                  
+ 168   2                  Lcd_write_number(1,15,*humLWarn);
+ 169   2                  
+ 170   2                  Lcd_write_string(0xC5,"MAX");
+ 171   2                  
+ 172   2                  Lcd_write_number(2,9,*tmpHWarn);
+ 173   2                  
+ 174   2                  Lcd_write_string(0xCB,"MIN");
+ 175   2                  
+ 176   2                  Lcd_write_number(2,15,*tmpLWarn);
+ 177   2            }
+ 178   1            Write_cmd(0x01);
+C51 COMPILER V9.54   LCD1602                                                               02/03/2023 12:39:42 PAGE 4   
+
+ 179   1            Delayms(1000);
+ 180   1      }
+ 181          
+ 182          
+ 183          
+ 184          
+ 185          
+ 186          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    548    ----
+   CONSTANT SIZE    =     80    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      20
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

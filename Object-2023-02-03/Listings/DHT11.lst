@@ -1,0 +1,328 @@
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DHT11
+OBJECT MODULE PLACED IN .\Objects\DHT11.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE DHT11.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\
+                    -DHT11.lst) TABS(6) OBJECT(.\Objects\DHT11.obj)
+
+line level    source
+
+   1          #include "Delay.h"
+   2          #include "intrins.h"
+   3          #include <REGX52.H>
+   4          #include "LCD1602.h"
+   5          #include "AT24C02.h"
+   6          #include "SYN6288.h"
+   7          #include <stdio.h>
+   8          #include "Key.h"
+   9          //引脚定义
+  10          sbit DHT11_DQ = P2^3;
+  11          sbit LED_RED = P2^2;
+  12          
+  13          
+  14          //DHT11存储
+  15          static char arr[5];
+  16          
+  17          
+  18          /**
+  19            *@brief   DHT11复位
+  20            *@param
+  21            *@return
+  22           */
+  23          void DHT11_Rst()
+  24          {
+  25   1            DHT11_DQ = 1;
+  26   1            //主机至少拉低18ms
+  27   1            DHT11_DQ = 0;
+  28   1            Delay20ms();
+  29   1            //主机拉高20-40us
+  30   1            DHT11_DQ = 1;
+  31   1            Delay30us();      
+  32   1      }
+  33          
+  34          /**
+  35            *@brief   DHT11判断响应
+  36            *@param
+  37            *@return  0响应 其他均为异常
+  38           */
+  39          unsigned char DHT11_Check()
+  40          {
+  41   1            unsigned char Ack = 0;
+  42   1            unsigned char time = 0;
+  43   1            
+  44   1            //等待DQ被拉低
+  45   1            time = 0;
+  46   1            while(DHT11_DQ)
+  47   1            {
+  48   2                  _nop_();
+  49   2                  time++;
+  50   2                  if(time > 100) {return 101;}
+  51   2            }
+  52   1            //已经被拉低，接受响应
+  53   1            Ack = DHT11_DQ;
+  54   1            //跳过DHT11_DQ低电平信号时间
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 2   
+
+  55   1            time = 0;
+  56   1            while(!DHT11_DQ)
+  57   1            {
+  58   2                  _nop_();
+  59   2                  time++;
+  60   2                  if(time > 50) {return 102;}
+  61   2            }
+  62   1            //跳过DHT11_DQ高电平信号时间
+  63   1            time = 0;
+  64   1            while(DHT11_DQ)
+  65   1            {
+  66   2                  _nop_();
+  67   2                  time++;
+  68   2                  if(time > 50) {return 103;}
+  69   2            }
+  70   1            
+  71   1            //运行到这里表示可以开始传输数据，返回0
+  72   1            return Ack;
+  73   1      }
+  74          
+  75          /**
+  76            *@brief   DHT11接受一个字节
+  77            *@param
+  78            *@return  接受到的字节
+  79           */
+  80          unsigned char DHT11_Read_1_Byte()
+  81          {
+  82   1            unsigned char Byte = 0;
+  83   1            unsigned char time = 0;
+  84   1            unsigned char i = 0;
+  85   1            
+  86   1            for(i = 0; i < 8; i++)
+  87   1            {
+  88   2                  //等待50us的低电平过去
+  89   2                  time = 0;
+  90   2                  while(!DHT11_DQ)
+  91   2                  {
+  92   3                        _nop_();
+  93   3                        time++;
+  94   3                        if(time > 50) {return 104;}
+  95   3                  }
+  96   2                  
+  97   2                  //低电平过去  延时40us    
+  98   2                  //26-28us表示0 70us表示1
+  99   2                  Delay40us();
+ 100   2                  
+ 101   2                  //读DQ状态
+ 102   2                  if(DHT11_DQ) { Byte |= (0x80 >> i);}
+ 103   2                  
+ 104   2                  //等待高电平时间过去
+ 105   2                  time = 0;
+ 106   2                  while(DHT11_DQ)
+ 107   2                  {
+ 108   3                        _nop_();
+ 109   3                        time++;
+ 110   3                        if(time > 50) {return 105;}
+ 111   3                  }
+ 112   2                  
+ 113   2            }
+ 114   1            return Byte;
+ 115   1            
+ 116   1      }
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 3   
+
+ 117          
+ 118          
+ 119          /**
+ 120            *@brief   DHT11读五个字节     湿度高八位  湿度低八位  温度高八位 温度低八位  校验位
+ 121            *@param
+ 122            *@return  判断故障
+ 123           */
+ 124          unsigned char DHT11_Read_5_Byte(unsigned char * arr)
+ 125          {
+ 126   1            unsigned char i = 0;
+ 127   1            DHT11_Rst();
+ 128   1            if(0 == DHT11_Check())
+ 129   1            {
+ 130   2                  
+ 131   2                                        
+ 132   2      //          for(i = 0; i < 5; i++)                              //    ????????????????????
+ 133   2      //          {
+ 134   2      //                *(arr+i) = DHT11_Read_1_Byte();
+ 135   2      //                
+ 136   2      //          }
+ 137   2                  
+ 138   2                  *(arr+0) = DHT11_Read_1_Byte();
+ 139   2                  *(arr+1) = DHT11_Read_1_Byte();
+ 140   2                  *(arr+2) = DHT11_Read_1_Byte();
+ 141   2                  *(arr+3) = DHT11_Read_1_Byte();
+ 142   2                  *(arr+4) = DHT11_Read_1_Byte();
+ 143   2                  
+ 144   2                  if(*(arr+0) + *(arr+1) + *(arr+2) + *(arr+3) == *(arr+4))
+ 145   2                  {
+ 146   3                        return 0;
+ 147   3                  }
+ 148   2                  else return 106;
+ 149   2            }
+ 150   1            else return 107;
+ 151   1            
+ 152   1      }
+ 153          
+ 154          
+ 155          
+ 156          /**
+ 157            *@brief   lcd显示温度湿度
+ 158            *@param   void
+ 159            *@return  void
+ 160           */
+ 161          void DHT11_LCD1602_Show()
+ 162          {
+ 163   1            Lcd_write_string(0X80,"NowHum:");
+ 164   1            Lcd_write_string(0Xc0,"NowTmp:");
+ 165   1            //读取并存储
+ 166   1            if(0 == DHT11_Read_5_Byte(arr))
+ 167   1            {
+ 168   2                  Lcd_write_number(1,8,arr[0]);
+ 169   2                  Lcd_write_number(2,8,arr[2]);
+ 170   2                  Delayms(500);
+ 171   2            }
+ 172   1            
+ 173   1            
+ 174   1            
+ 175   1      }
+ 176          
+ 177          
+ 178          /**
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 4   
+
+ 179            *@brief   温度湿度报警
+ 180            *@param   两个警报临界值
+ 181            *@return  返回值作为PWM的比较值来控制电机的转动速度
+ 182           */
+ 183          unsigned char DHT11_H_Alarm(unsigned char * humHWarn,unsigned char * tmpHWarn)
+ 184          {
+ 185   1            char flag = 0;
+ 186   1            /* 实物需要把这个while注释掉，否则无法测量 */
+ 187   1            //while(0 != DHT11_Read_5_Byte(arr));
+ 188   1            if(arr[0] > (*humHWarn) && arr[2] > (*tmpHWarn))
+ 189   1            {
+ 190   2                  //P3_0 = 1;
+ 191   2                  flag = 1;
+ 192   2            while(1 == flag)
+ 193   2            {
+ 194   3                  
+ 195   3                  
+ 196   3                  if(0x77 == Matrix_key())
+ 197   3                  {
+ 198   4                        flag = 0;
+ 199   4                  }
+ 200   3            }
+ 201   2      
+ 202   2                  return 9;
+ 203   2            }else if
+ 204   1            ((arr[0] > (*humHWarn)) || (arr[2] > (*tmpHWarn)))
+ 205   1            {
+ 206   2                  //P3_0 = 1;
+ 207   2                  return 2;
+ 208   2            }
+ 209   1      
+ 210   1            return 0;
+ 211   1      
+ 212   1            
+ 213   1      }
+ 214          
+ 215          /**
+ 216            *@brief   温度湿度温湿度过低报警
+ 217            *@param   
+ 218            *@return  
+ 219           */
+ 220          void DHT11_L_Alarm(unsigned char * humLWarn,unsigned char * tmpLWarn)
+ 221          {
+ 222   1            //LED_RED = 1;
+ 223   1            /* 实物需要把这个while注释掉，否则无法测量 */
+ 224   1            //while(0 != DHT11_Read_5_Byte(arr));
+ 225   1            if((arr[0] < (*humLWarn)) || (arr[2] < (*tmpLWarn)))
+ 226   1            {
+ 227   2                  LED_RED = 0;
+ 228   2            }else if((arr[0] > (*humLWarn)) && (arr[2] > (*tmpLWarn)))
+ 229   1            {
+ 230   2                  LED_RED = 1;
+ 231   2            }
+ 232   1      
+ 233   1            
+ 234   1      }
+ 235          
+ 236          /**
+ 237            *@brief   防止设定的上下限出问题
+ 238            *@param   
+ 239            *@return  
+ 240           */
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 5   
+
+ 241          void DHT11_SetAlarn(unsigned char * humHWarn, unsigned char * humLWarn,\
+ 242                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+ 243          {
+ 244   1            //湿度上限
+ 245   1            if((*humHWarn) > 99) { (*humHWarn) = 99; }
+ 246   1            if((*humHWarn) <= 50) { (*humHWarn) = 50; }
+ 247   1            //湿度下线
+ 248   1            if((*humLWarn) < 15 ) { (*humLWarn) = 15;  }
+ 249   1            if((*humLWarn) > 50 ) { (*humLWarn) = 50;  }
+ 250   1            //温度上限
+ 251   1            if((*tmpHWarn) > 40 ) { (*tmpHWarn) = 40;  }
+ 252   1            if((*tmpHWarn) <= 25 ) { (*tmpHWarn) = 25;  }
+ 253   1            //温度下线
+ 254   1            if((*tmpLWarn) < 5  ) { (*tmpLWarn) = 5;   }
+ 255   1            if((*tmpLWarn) > 25  ) { (*tmpLWarn) = 25;   }
+ 256   1      }
+ 257          
+ 258          
+ 259          
+ 260          
+ 261          /**
+ 262            *@brief   读取at24c02中的数据保存到变量中
+ 263            *@param   
+ 264            *@return  
+ 265           */
+ 266          void DHT11_SaveDH(unsigned char * humHWarn, unsigned char * humLWarn,\
+ 267                              unsigned char * tmpHWarn, unsigned char * tmpLWarn)
+ 268          {
+ 269   1            *humHWarn = AT24C02_Read(1);
+ 270   1            *humLWarn = AT24C02_Read(2);
+ 271   1            *tmpHWarn = AT24C02_Read(3);
+ 272   1            *tmpLWarn = AT24C02_Read(4);
+ 273   1            DHT11_SetAlarn(humHWarn,humLWarn,tmpHWarn,tmpLWarn);
+ 274   1      }
+ 275          
+ 276          void DHT11_SynRead_H()
+ 277          {
+ 278   1            char DH[20] = 0;
+ 279   1            int H = (int)arr[0];
+ 280   1            sprintf(DH,"%s%d","当前湿度",H);
+ 281   1            SYN_FrameInfo(0, DH);
+ 282   1            Delayms(8000);
+ 283   1            
+ 284   1      }
+ 285          
+ 286          
+ 287          void DHT11_SynRead_T()
+ 288          {
+ 289   1            char DH[20] = 0;
+ 290   1            int T = (int)arr[2];
+ 291   1            sprintf(DH,"%s%d","当前温度",T);
+ 292   1            SYN_FrameInfo(0, DH);
+ 293   1            Delayms(8000);
+ 294   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    983    ----
+   CONSTANT SIZE    =     79    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5      84
+C51 COMPILER V9.54   DHT11                                                                 02/03/2023 12:39:42 PAGE 6   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

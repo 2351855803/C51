@@ -1,0 +1,99 @@
+C51 COMPILER V9.54   SYN6288                                                               01/28/2023 17:55:06 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE SYN6288
+OBJECT MODULE PLACED IN .\Objects\SYN6288.obj
+COMPILER INVOKED BY: E:\shudian2\5\C51\BIN\C51.EXE SYN6288.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\SYN6288.lst) TABS(6) OBJECT(.\Objects\SYN6288.obj)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include <string.h>
+   3          
+   4          
+   5          //串口1初始化
+   6          void UART1_Init(void)
+   7          {
+   8   1            SCON = 0x50;            //8位数据,可变波特率
+   9   1            TMOD |= 0x20;           //设定定时器1为8位自动重装方式
+  10   1            TL1 = 0xFD;       //设定定时初值
+  11   1            TH1 = 0xFD;       //设定定时器重装值
+  12   1            ET1 = 0;          //禁止定时器1中断
+  13   1            TR1 = 1;          //启动定时器1
+  14   1            ES = 1;
+  15   1            EA = 1;
+  16   1      }
+  17          
+  18          
+  19          void UART1_SendByte(unsigned char DAT)
+  20          {
+  21   1            SBUF = DAT;
+  22   1            while(TI == 0);
+  23   1            TI=0;
+  24   1      }
+  25          
+  26          
+  27          void UART1_SendString(unsigned char *DAT, unsigned char len)
+  28          {
+  29   1            unsigned char i;
+  30   1            for(i = 0; i < len; i++)
+  31   1            {
+  32   2                  UART1_SendByte(*DAT++);
+  33   2            }
+  34   1      }
+  35          
+  36          
+  37          
+  38          
+  39          //Music:  0:无背景音乐  1~15:选择背景音乐
+  40          void SYN_FrameInfo(unsigned char Music, unsigned char *HZdata)
+  41          {
+  42   1            
+  43   1            unsigned char  Frame_Info[50];
+  44   1            unsigned char  HZ_Length;
+  45   1            unsigned char  ecc  = 0;                  //定义校验字节
+  46   1            unsigned int i = 0;
+  47   1            HZ_Length = strlen((char*)HZdata);              //需要发送文本的长度
+  48   1      
+  49   1      
+  50   1            Frame_Info[0] = 0xFD ;              //构造帧头FD
+  51   1            Frame_Info[1] = 0x00 ;              //构造数据区长度的高字节
+  52   1            Frame_Info[2] = HZ_Length + 3;            //构造数据区长度的低字节
+  53   1            Frame_Info[3] = 0x01 ;              //构造命令字：合成播放命令
+  54   1            Frame_Info[4] = 0x01 | Music << 4 ; //构造命令参数：背景音乐设定
+C51 COMPILER V9.54   SYN6288                                                               01/28/2023 17:55:06 PAGE 2   
+
+  55   1      
+  56   1      
+  57   1            for(i = 0; i < 5; i++)                          //依次发送构造好的5个帧头字节
+  58   1            {
+  59   2                  ecc = ecc ^ (Frame_Info[i]);        //对发送的字节进行异或校验
+  60   2            }
+  61   1      
+  62   1            for(i = 0; i < HZ_Length; i++)            //依次发送待合成的文本数据
+  63   1            {
+  64   2                  ecc = ecc ^ (HZdata[i]);                        //对发送的字节进行异或校验
+  65   2            }
+  66   1      
+  67   1            memcpy(&Frame_Info[5], HZdata, HZ_Length);
+  68   1            Frame_Info[5 + HZ_Length] = ecc;
+  69   1            UART1_SendString(Frame_Info, 5 + HZ_Length + 1);
+  70   1      }
+  71          
+  72          
+  73          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    204    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      59
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
